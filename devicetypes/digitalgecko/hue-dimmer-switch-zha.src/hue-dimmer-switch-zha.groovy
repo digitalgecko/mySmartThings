@@ -22,13 +22,15 @@ metadata {
 
 		fingerprint profileId: "0104", endpointId: "02", application:"02", outClusters: "0019", inClusters: "0000,0001,0003,000F,FC00", manufacturer: "Philips", model: "RWL020", deviceJoinName: "Hue Dimmer Switch (ZHA)"
 
-		attribute "lastAction", "string"
-	}
+
+        attribute "lastAction", "string"
+    }
 
 
-	simulator {
-		// TODO: define status and reply messages here
-	}
+    simulator {
+        // TODO: define status and reply messages here
+    }
+
 
 	tiles(scale: 2) {
 		// TODO: define your main and details tiles here
@@ -63,12 +65,15 @@ metadata {
 		// }
 	}
 
+
+
 	main "lastAction"
 	details(["lastAction","battery2","refresh","configure"])
 }
 
 // parse events into attributes
 def parse(String description) {
+
 	def msg = zigbee.parse(description)
 
 	//log.warn msg
@@ -90,18 +95,20 @@ def parse(String description) {
 
 	return result
 	// TODO: handle 'numberOfButtons' attribute
+
 }
 /*
-	parseReportAttributeMessage
-*/
+parseReportAttributeMessage
+ */
 private List parseReportAttributeMessage(String description) {
-	Map descMap = (description - "read attr - ").split(",").inject([:]) { map, param ->
-		def nameAndValue = param.split(":")
-		map += [(nameAndValue[0].trim()):nameAndValue[1].trim()]
-	}
+    Map descMap = (description - "read attr - ").split(",").inject([:]) { map, param ->
+        def nameAndValue = param.split(":")
+        map += [(nameAndValue[0].trim()):nameAndValue[1].trim()]
+    }
 
-	List result = []
-    
+    List result = []
+
+
 	// Battery
 	if (descMap.cluster == "0001" && descMap.attrId == "0020") {
 		// log.warn descMap
@@ -109,21 +116,23 @@ private List parseReportAttributeMessage(String description) {
 	}
     
 	return result
+
 }
 
 private boolean shouldProcessMessage(cluster) {
-	// 0x0B is default response indicating message got through
-	boolean ignoredMessage = cluster.profileId != 0x0104 ||
-	cluster.command == 0x0B ||
-	(cluster.data.size() > 0 && cluster.data.first() == 0x3e)
-	return !ignoredMessage
+    // 0x0B is default response indicating message got through
+    boolean ignoredMessage = cluster.profileId != 0x0104 ||
+    cluster.command == 0x0B ||
+    (cluster.data.size() > 0 && cluster.data.first() == 0x3e)
+    return !ignoredMessage
 }
 
 /*
-	getBatteryResult
-*/
+getBatteryResult
+ */
 //TODO: needs calibration
 private Map getBatteryResult(rawValue) {
+
 	//log.debug "Battery rawValue = ${rawValue}"
 
 	def result = [
@@ -222,6 +231,7 @@ private Map parseCatchAllMessage(String description) {
 				}
 	}
 	return resultMap
+
 }
 
 def refresh() {
@@ -270,6 +280,7 @@ def configure() {
 	configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x0258 {}"
 	// configCmds += "st cr 0x${device.deviceNetworkId} 0x02 0x0001 0x0020 0x20 0x001E 0x001e {}"
 
+
 	configCmds += "delay 2000"
 
 	return configCmds + refresh()
@@ -285,4 +296,5 @@ def updated() {
 	// log.debug "in updated()"
 
 	configureHealthCheck()
+
 }
