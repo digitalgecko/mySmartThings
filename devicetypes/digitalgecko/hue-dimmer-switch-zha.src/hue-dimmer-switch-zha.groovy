@@ -184,7 +184,7 @@ private List getButtonResult(rawValue) {
     def buttonState = rawValue[4]
     def buttonHoldTime = rawValue[6]
     def hueStatus = (button as String) + "00" + (buttonState as String) // This is the state in the HUE api
-    log.error "Button: " + button + "  Hue Code: " + hueStatus + "  Hold Time: " + buttonHoldTime + "  Button State: " + buttonState
+    log.debug "Button: " + button + "  Hue Code: " + hueStatus + "  Hold Time: " + buttonHoldTime + "  Button State: " + buttonState
     //   result.data = ['buttonNumber': button]
 
     def buttonName
@@ -203,32 +203,33 @@ private List getButtonResult(rawValue) {
         buttonName = "off" 
     }
 
-	// The button is pressed, aka: pushed + released, with 0 hold time
+	// The button is pushed
     if ( buttonState == 0 ) {
-        result = [createEvent(name: "button", value: "pressed_" + buttonName, data: [buttonNumber: buttonName], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)]
-        sendEvent(name: "lastAction", value: buttonName + " pressed")
-    } 
-	// The button is pressed, aka: pushed + released, with at least 1s hold time
-    else if ( buttonState == 2 ) {
         result = [
-        createEvent(name: "button", value: "pushed_" + buttonName, data: [buttonNumber: buttonName], descriptionText: "$device.displayName button $button was pushed", isStateChange: true),
-        createEvent(name: "button", value: "released_" + buttonName, data: [buttonNumber: buttonName], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
+        createEvent(name: "button", value: "pushed", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
         ]
         sendEvent(name: "lastAction", value: buttonName + " pushed")
+    } 
+    // The button is released with no or little hold time
+    else if ( buttonState == 2 ) {
+        result = [
+        createEvent(name: "button", value: "released", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was released", isStateChange: true)
+        ]
         sendEvent(name: "lastAction", value: buttonName + " released")
+    } 
+   	// The button is held
+    else if ( buttonState == 1 ) {
+        result = [createEvent(name: "button", value: "held", data: [buttonNumber: button], descriptionText: "$device.displayName button $button is held", isStateChange: true)]
+        sendEvent(name: "lastAction", value: buttonName + " held")
     } 
 	// The button is released, with at least 1s hold time. This code happens after the button is held
     else if ( buttonState == 3 ) {
         result = [
-        createEvent(name: "button", value: "released_" + buttonName, data: [buttonNumber: buttonName], descriptionText: "$device.displayName button $button was pushed", isStateChange: true)
+        createEvent(name: "button", value: "released", data: [buttonNumber: button], descriptionText: "$device.displayName button $button was held and released", isStateChange: true)
         ]
         sendEvent(name: "lastAction", value: buttonName + " released")
     } 
-	// The button is held
-    else if ( buttonHoldTime == 8 ) {
-        result = [createEvent(name: "button", value: "held_" + buttonName, data: [buttonNumber: buttonName], descriptionText: "$device.displayName button $button was held", isStateChange: true)]
-        sendEvent(name: "lastAction", value: buttonName + " held")
-    } 
+
     else {
         return
     }
